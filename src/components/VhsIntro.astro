@@ -1,0 +1,89 @@
+<div id="vhs" aria-hidden="true">
+	<canvas id="vhs-noise"></canvas>
+	<div class="scanlines"></div>
+	<div class="tracking"></div>
+</div>
+
+<style>
+	#vhs {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		background: #000;
+		pointer-events: none;
+		transition: opacity 0.8s ease;
+	}
+
+	#vhs.fade {
+		opacity: 0;
+	}
+
+	#vhs-noise {
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		opacity: 0.85;
+	}
+
+	.scanlines {
+		position: absolute;
+		inset: 0;
+		background: repeating-linear-gradient(
+			to bottom,
+			rgba(0, 0, 0, 1) 0 1px,
+			transparent 1px 3px
+		);
+	}
+
+	/*.tracking {
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 12%;
+		background: linear-gradient(transparent, rgba(255, 255, 255, 0.15), transparent);
+		animation: roll 1.2s linear infinite;
+	}*/
+
+	@keyframes roll {
+		from { transform: translateY(-100%); }
+		to { transform: translateY(900%); }
+	}
+</style>
+
+<script>
+	const overlay = document.getElementById('vhs')!;
+	const canvas = document.getElementById('vhs-noise') as HTMLCanvasElement;
+	const ctx = canvas.getContext('2d')!;
+
+	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		overlay.remove();
+	} else {
+		// Low resolution = chunky, VHS-looking noise
+		canvas.width = 320;
+		canvas.height = 180;
+
+		let frame = 0;
+		const draw = () => {
+			const img = ctx.createImageData(canvas.width, canvas.height);
+			const d = img.data;
+			for (let i = 0; i < d.length; i += 4) {
+				const v = Math.random() * 255;
+				d[i] = d[i + 1] = d[i + 2] = v;
+				d[i + 3] = 255;
+			}
+			ctx.putImageData(img, 0, 0);
+			frame = requestAnimationFrame(draw);
+		};
+		draw();
+
+		setTimeout(() => overlay.classList.add('fade'), 2000);
+		overlay.addEventListener(
+			'transitionend',
+			() => {
+				cancelAnimationFrame(frame);
+				overlay.remove();
+			},
+			{ once: true }
+		);
+	}
+</script>
