@@ -1,23 +1,34 @@
+---
+import '../styles/global.css';
+import '@fontsource/vt323';
+import '@fontsource/share-tech-mono';
+import CrtOverlay from '../components/CrtOverlay.astro';
+
+interface Props {
+	title: string;
+	description?: string;
+}
+
+const { title, description='Izak — CS & Applied Math student. Projects, resume, and game reviews.' } = Astro.props;
+---
+
 <!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<meta name="theme-color" content={'#050a06'} />
 	</head>
 	<body>
-		<slot />
+		<div class="screen">
+			<CrtOverlay />
+			<!-- nav -->
+			<slot />
+
+			<!-- footer -->
+
+		</div>
 	</body>
 </html>
-
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
