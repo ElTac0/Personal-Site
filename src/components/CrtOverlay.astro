@@ -1,0 +1,40 @@
+<div aria-hidden="true" class="crt-overlay">
+    
+</div>
+
+<style>
+    .crt-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6000;
+    background: repeating-linear-gradient(
+			to bottom,
+			rgba(0, 0, 0, var(--scanline)) 0 1px,
+			transparent 1px 3px
+		);
+    }
+
+    .crt-overlay::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(transparent 50%, rgba(0, 0, 0, var(--vignette)) 100%);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        .crt-overlay {
+            animation: flicker 15s infinite;
+        }
+    }
+    @keyframes flicker {
+        0%, 19.999%, 22%, 41.999%, 43%, 62.999%, 64%, 86.999%, 88%, 100% {
+            opacity: 1;
+        }
+        20%, 21.999%, 42%, 42.999%, 63%, 63.999%, 87%, 87.999%  {
+            opacity: 0.85;
+        }
+    }
+    
+
+
+</style>
