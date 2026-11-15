@@ -3,6 +3,7 @@ import '../styles/global.css';
 import '@fontsource/vt323';
 import '@fontsource/share-tech-mono';
 import CrtOverlay from '../components/CrtOverlay.astro';
+import Nav from '../components/Nav.astro';
 
 interface Props {
 	title: string;
@@ -24,7 +25,7 @@ const { title, description='Izak — CS & Applied Math student. Projects, resume
 	<body>
 		<div class="screen">
 			<CrtOverlay />
-			<!-- nav -->
+			<Nav />
 			<slot />
 
 			<!-- footer -->
