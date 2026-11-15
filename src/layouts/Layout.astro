@@ -1,16 +1,19 @@
 ---
-import '../styles/global.css';
 import '@fontsource/vt323';
 import '@fontsource/share-tech-mono';
+import '../styles/global.css';
 import CrtOverlay from '../components/CrtOverlay.astro';
-import Nav from '../components/Nav.astro';
+import Menu from '../components/Menu.astro';
 
 interface Props {
 	title: string;
 	description?: string;
 }
 
-const { title, description='Izak — CS & Applied Math student. Projects, resume, and game reviews.' } = Astro.props;
+const {
+	title,
+	description = 'Izak — CS & Applied Math student. Projects, resume, and game reviews.',
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -20,16 +23,17 @@ const { title, description='Izak — CS & Applied Math student. Projects, resume
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>{title}</title>
 		<meta name="description" content={description} />
-		<meta name="theme-color" content={'#050a06'} />
+		<meta name="theme-color" content="#050a06" />
 	</head>
 	<body>
 		<div class="screen">
 			<CrtOverlay />
-			<Nav />
-			<slot />
+			<Menu />
+			<main>
+				<slot />
+			</main>
 
 			<!-- footer -->
-
 		</div>
 	</body>
 </html>

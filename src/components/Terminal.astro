@@ -1,0 +1,175 @@
+<section aria-label="Terminal">
+	<div id="terminal-log" role="log" aria-label="Terminal output">
+		<p>Type 'help' for available commands</p>
+	</div>
+
+	<form id="terminal-form">
+		<label for="command-input" class="sr-only"></label>
+		<span aria-hidden="true">&gt;</span>
+		<input
+			type="text"
+			id="command-input"
+			name="cmd"
+			autocomplete="off"
+			spellcheck="false"
+			autocapitalize="none"
+			enterkeyhint="enter"
+			placeholder=""
+		/>
+	</form>
+</section>
+
+<style>
+	section {
+		display: flex;
+		flex-direction: column;
+		height: 300px;
+		font-family: var(--font-display);
+		color: var(--color-text);
+		background-color: var(--color-terminal-bg);
+		border: 1px solid var(--color-terminal-border);
+		padding: 1rem;
+	}
+	#terminal-log {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		overflow-y: auto;
+		min-height: 0; /* Allow flex item to shrink below content size */
+	}
+	#terminal-log :global(p) {
+		margin: 0;
+		white-space: pre-wrap;
+	}
+
+	#terminal-log :global(p:first-child) {
+		margin-top: auto;
+	}
+
+	#terminal-log :global(.error) {
+		color: var(--color-error);
+	}
+	#terminal-form {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+	#command-input {
+		flex: 1;
+		color: inherit;
+		font: inherit;
+		font-size: 16px;
+		background: transparent;
+		caret-color: var(--color-text);
+		border: none;
+		padding: 0;
+	}
+</style>
+
+<script>
+	import { navItems } from '../data/nav';
+	function normalize(str: string): string {
+		str = str.trim().toLowerCase();
+		str = str.replace(/\s+/g, ' ');
+		str = str.replace(/^cd /, '');
+		str = str.replace(/^\//, '');
+		return str;
+	}
+
+	function printToTerminal(
+		log: HTMLElement,
+		message: string,
+		className?: string,
+	) {
+		const p = document.createElement('p');
+		p.textContent = message;
+		if (className) p.classList.add(className);
+		log.appendChild(p);
+		log.scrollTop = log.scrollHeight; // Scroll to the bottom
+	}
+
+	function getCurrentPath(): string {
+		return window.location.pathname.replace(/\/$/, '') || '/';
+	}
+
+	function navigate(log: HTMLElement, input: HTMLInputElement, href: string) {
+		if (href === getCurrentPath()) {
+			printToTerminal(log, 'Already here.');
+			return;
+		}
+
+		printToTerminal(log, `Loading ${href}...`);
+		input.disabled = true;
+
+		const reducedMotion = window.matchMedia(
+			'(prefers-reduced-motion: reduce)',
+		).matches;
+		const delay = reducedMotion ? 0 : 300;
+
+		setTimeout(() => {
+			window.location.href = href;
+		}, delay);
+	}
+
+	function initTerminal() {
+		const form = document.getElementById('terminal-form');
+		const log = document.getElementById('terminal-log');
+		const input = document.getElementById('command-input');
+		if (!(input instanceof HTMLInputElement))
+			throw new Error('Input element not found');
+		if (!(log instanceof HTMLElement)) throw new Error('Log element not found');
+		if (!(form instanceof HTMLFormElement))
+			throw new Error('Form element not found');
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const raw = input.value;
+			const command = normalize(raw);
+
+			if (raw.trim() === '') return;
+
+			printToTerminal(log, `> ${raw.trim()}`);
+			input.value = '';
+			if (command === 'help') {
+				printToTerminal(log, 'Available commands:');
+				navItems.forEach((item) => {
+					const note = item.external ? ' (opens new tab)' : '';
+					printToTerminal(log, `  ${item.aliases[0]} - ${item.label}${note}`);
+				});
+				printToTerminal(log, '  home - Return to start');
+				printToTerminal(log, '  clear - Clear the terminal');
+				printToTerminal(log, '  help - Show this list');
+				return;
+			}
+			if (command === 'clear') {
+				log.replaceChildren();
+				return;
+			}
+			if (command === 'home' || command === '~' || command === '') {
+				navigate(log, input, '/');
+				return;
+			}
+			const matchedItem = navItems.find((item) =>
+				item.aliases.some((alias) => normalize(alias) === command),
+			);
+
+			if (!matchedItem) {
+				printToTerminal(log, `Command not found: ${raw.trim()}`, 'error');
+				return;
+			}
+
+			if (matchedItem.external) {
+				printToTerminal(log, `Opening ${matchedItem.label} in new tab...`);
+				window.open(matchedItem.href, '_blank', 'noopener,noreferrer');
+				return;
+			}
+
+			navigate(log, input, matchedItem.href);
+		});
+		window.addEventListener('pageshow', (e) => {
+			if (e.persisted) {
+				input.disabled = false;
+			}
+		});
+	}
+	initTerminal();
+</script>
