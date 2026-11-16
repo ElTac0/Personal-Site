@@ -1,0 +1,85 @@
+---
+import Layout from './Layout.astro';
+import Terminal from '../components/Terminal.astro';
+import Menu from '../components/Menu.astro';
+import Contact from '../components/Contact.astro';
+
+interface Props {
+	title: string;
+	description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<Layout title={title} description={description}>
+	<a href="#content" class="skip-link">
+		Skip to content.
+	</a>
+	<div class="screen">
+		<div class="sidebar">
+			<Menu />
+			<div class="terminal">
+				<Contact />
+				<Terminal />
+			</div>
+		</div>
+		<main id="content" tabindex="-1">
+			<slot />
+		</main>
+	</div>
+</Layout>
+
+<style>
+	.screen {
+		--frame-padding: 1.5rem;
+
+		display: grid;
+		grid-template-columns: clamp(16rem, 20vw, 32rem) minmax(0, 1fr);
+		grid-template-areas: 'sidebar content';
+		gap: var(--frame-padding);
+		padding: var(--frame-padding);
+		min-height: 100vh;
+		min-height: 100dvh;
+	}
+
+	.sidebar {
+		display: flex;
+		flex-direction: column;
+		grid-area: sidebar;
+		position: sticky;
+		top: var(--frame-padding);
+		align-self: start;
+		height: calc(100vh - 2 * var(--frame-padding));
+		height: calc(100dvh - 2 * var(--frame-padding));
+		gap: 2rem;
+	}
+	.terminal {
+		margin-top: auto;
+		flex: 0 1 50%;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	#content {
+		grid-area: content;
+	}
+	.skip-link {
+		position: absolute;
+		top: 1rem;
+		left: 1rem;
+		z-index: 10000;
+		padding: 0.5rem 1rem;
+		background-color: var(--color-highlight-bg);
+		color: var(--color-highlight-text);
+		font-family: var(--font-display);
+		text-decoration: none;
+		text-shadow: none;
+		transform: translateY(-200%);
+	}
+
+	.skip-link:focus {
+		transform: translateY(0);
+	}
+</style>

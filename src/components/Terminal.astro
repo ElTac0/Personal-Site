@@ -4,7 +4,9 @@
 	</div>
 
 	<form id="terminal-form">
-		<label for="command-input" class="sr-only"></label>
+		<label for="command-input" class="sr-only">
+			Enter command
+		</label>
 		<span aria-hidden="true">&gt;</span>
 		<input
 			type="text"
@@ -23,8 +25,10 @@
 	section {
 		display: flex;
 		flex-direction: column;
-		height: 300px;
+		flex: 1;
+		min-height: 0;
 		font-family: var(--font-display);
+		font-size: 30px;
 		color: var(--color-text);
 		background-color: var(--color-terminal-bg);
 		border: 1px solid var(--color-terminal-border);
@@ -58,7 +62,6 @@
 		flex: 1;
 		color: inherit;
 		font: inherit;
-		font-size: 16px;
 		background: transparent;
 		caret-color: var(--color-text);
 		border: none;
@@ -67,7 +70,7 @@
 </style>
 
 <script>
-	import { navItems } from '../data/nav';
+	import { navItems, contactLinks, type NavItem } from '../data/nav';
 	function normalize(str: string): string {
 		str = str.trim().toLowerCase();
 		str = str.replace(/\s+/g, ' ');
@@ -120,6 +123,7 @@
 		if (!(log instanceof HTMLElement)) throw new Error('Log element not found');
 		if (!(form instanceof HTMLFormElement))
 			throw new Error('Form element not found');
+		const allItems: NavItem[] = [...navItems, ...contactLinks];
 		form.addEventListener('submit', (e) => {
 			e.preventDefault();
 			const raw = input.value;
@@ -130,12 +134,20 @@
 			printToTerminal(log, `> ${raw.trim()}`);
 			input.value = '';
 			if (command === 'help') {
-				printToTerminal(log, 'Available commands:');
-				navItems.forEach((item) => {
-					const note = item.external ? ' (opens new tab)' : '';
-					printToTerminal(log, `  ${item.aliases[0]} - ${item.label}${note}`);
+				const pages = allItems.filter((item) => !item.external);
+				const external = allItems.filter((item) => item.external);
+
+				printToTerminal(log, 'Pages:');
+				pages.forEach((item) => {
+					printToTerminal(log, `  ${item.aliases[0]} - ${item.label}`);
 				});
-				printToTerminal(log, '  home - Return to start');
+
+				printToTerminal(log, 'External (opens new tab):');
+				external.forEach((item) => {
+					printToTerminal(log, `  ${item.aliases[0]} - ${item.label}`);
+				});
+
+				printToTerminal(log, 'Terminal:');
 				printToTerminal(log, '  clear - Clear the terminal');
 				printToTerminal(log, '  help - Show this list');
 				return;
@@ -144,11 +156,7 @@
 				log.replaceChildren();
 				return;
 			}
-			if (command === 'home' || command === '~' || command === '') {
-				navigate(log, input, '/');
-				return;
-			}
-			const matchedItem = navItems.find((item) =>
+			const matchedItem = allItems.find((item) =>
 				item.aliases.some((alias) => normalize(alias) === command),
 			);
 
