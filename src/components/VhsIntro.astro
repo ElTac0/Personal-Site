@@ -9,9 +9,11 @@
 		position: fixed;
 		inset: 0;
 		z-index: 9999;
-		background: #000;
+		background: var(--color-bg);
 		pointer-events: none;
-		transition: opacity 0.8s ease;
+		transition-property: opacity;
+		transition-timing-function: ease;
+		/* duration is set from the script */
 	}
 
 	#vhs.fade {
@@ -43,10 +45,10 @@
 		height: 12%;
 		background: linear-gradient(
 			transparent,
-			rgba(255, 255, 255, 0.5),
+			color-mix(in srgb, var(--color-text) 40%, transparent),
 			transparent
 		);
-		animation: roll 1.2s linear infinite;
+		animation: roll 3.5s linear infinite;
 	}
 
 	@keyframes roll {
@@ -54,45 +56,92 @@
 			transform: translateY(-100%);
 		}
 		to {
-			transform: translateY(900%);
+			transform: translateY(100vh);
 		}
 	}
 </style>
 
 <script>
+	// ---- Settings ----
+	type Mode = 'green' | 'rainbow';
+	const MODE = 'green' as Mode; // switch to 'rainbow' to compare
+	const STATIC_MS = 1500; // how long the static plays
+	const FADE_MS = 500; // how long the fade-out takes
+
 	const overlay = document.getElementById('vhs')!;
 	const canvas = document.getElementById('vhs-noise') as HTMLCanvasElement;
 	const ctx = canvas.getContext('2d')!;
 
-	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-		overlay.remove();
-	} else {
-		// Low resolution = chunky, VHS-looking noise
-		canvas.width = 320;
-		canvas.height = 180;
+	let frame = 0;
 
-		let frame = 0;
-		const draw = () => {
-			const img = ctx.createImageData(canvas.width, canvas.height);
-			const d = img.data;
-			for (let i = 0; i < d.length; i += 4) {
-				const v = Math.random() * 255;
-				d[i] = d[i + 1] = d[i + 2] = v;
+	// Ends the intro and tells the rest of the page it's done
+	function finish() {
+		cancelAnimationFrame(frame);
+		overlay.remove();
+		document.documentElement.dataset.vhsDone = 'true';
+		document.dispatchEvent(new CustomEvent('vhs:done'));
+	}
+
+	function drawGreen() {
+		const img = ctx.createImageData(canvas.width, canvas.height);
+		const d = img.data;
+		for (let i = 0; i < d.length; i += 4) {
+			const v = Math.random() < 0.4 ? 0 : Math.random() ** 2 * 255;
+			d[i] = v * 0.15; // red: low
+			d[i + 1] = v; // green: full
+			d[i + 2] = v * 0.3; // blue: low
+			d[i + 3] = 255;
+		}
+		ctx.putImageData(img, 0, 0);
+	}
+
+	function drawRainbow(time: number) {
+		const { width, height } = canvas;
+		const img = ctx.createImageData(width, height);
+		const d = img.data;
+
+		for (let y = 0; y < height; y++) {
+			// Slowly drifting bands: 0 = blue-ish rows, 1 = pink-ish rows
+			const band = (Math.sin(y * 0.15 + time * 0.003) + 1) / 2;
+			let r = 0;
+			let g = 0;
+			let b = 0;
+
+			for (let x = 0; x < width; x++) {
+				// Only pick a new color sometimes; otherwise reuse the
+				// previous pixel's color, which smears it sideways
+				if (x === 0 || Math.random() < 0.3) {
+					const n = Math.random();
+					r = 80 + band * 140 + n * 60;
+					g = n * 160 * (1 - band) + Math.random() * 40;
+					b = 150 + (1 - band) * 80 + n * 40;
+				}
+				const i = (y * width + x) * 4;
+				d[i] = r;
+				d[i + 1] = g;
+				d[i + 2] = b;
 				d[i + 3] = 255;
 			}
-			ctx.putImageData(img, 0, 0);
+		}
+		ctx.putImageData(img, 0, 0);
+	}
+
+	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		finish();
+	} else {
+		// Rainbow uses a wide, short canvas so pixels stretch into streaks
+		canvas.width = MODE === 'rainbow' ? 480 : 320;
+		canvas.height = MODE === 'rainbow' ? 120 : 180;
+
+		const draw = (time: number) => {
+			if (MODE === 'rainbow') drawRainbow(time);
+			else drawGreen();
 			frame = requestAnimationFrame(draw);
 		};
-		draw();
+		frame = requestAnimationFrame(draw);
 
-		setTimeout(() => overlay.classList.add('fade'), 2000);
-		overlay.addEventListener(
-			'transitionend',
-			() => {
-				cancelAnimationFrame(frame);
-				overlay.remove();
-			},
-			{ once: true },
-		);
+		overlay.style.transitionDuration = `${FADE_MS}ms`;
+		setTimeout(() => overlay.classList.add('fade'), STATIC_MS);
+		overlay.addEventListener('transitionend', finish, { once: true });
 	}
 </script>

@@ -1,4 +1,6 @@
-<div aria-hidden="true" class="crt-overlay"></div>
+<div aria-hidden="true" class="crt-overlay">
+	<div class="tracking"></div>
+</div>
 
 <style>
 	.crt-overlay {
@@ -27,6 +29,31 @@
 			animation: flicker 15s infinite;
 		}
 	}
+
+	.tracking {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 12%;
+		background: linear-gradient(
+			transparent,
+			color-mix(in srgb, var(--color-text) 8%, transparent),
+			transparent
+		);
+		animation: crt-roll 7.5s linear infinite;
+	}
+
+	@keyframes crt-roll {
+		0% {
+			transform: translateY(-100%);
+		}
+		47%,
+		100% {
+			transform: translateY(100vh);
+		}
+	}
+
 	@keyframes flicker {
 		0%,
 		19.999%,
