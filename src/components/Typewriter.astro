@@ -6,13 +6,14 @@ interface Props {
 
 const { lines, speed = 30 } = Astro.props;
 ---
-<h1 class="sr-only">
-	{lines[0]}
-</h1>
+
+<h1 class="sr-only">{lines[0]}</h1>
 <div aria-hidden="true" data-typewriter data-speed={speed}>
-	{lines.map((line)=>(
+	{lines.map((line, i) => (
 		<p>
-			<span class="typed"></span><span class="remaining">{line}</span>
+			<span class="typed"></span>
+			{i === 0 && <span class="cursor" />}
+			<span class="remaining">{line}</span>
 		</p>
 	))}
 </div>
@@ -20,8 +21,32 @@ const { lines, speed = 30 } = Astro.props;
 <style>
 	[data-typewriter] {
 		text-align: center;
+		margin: auto;
+		letter-spacing: normal;
 	}
-	.is-typing .remaining{
+	.is-typing .remaining {
 		visibility: hidden;
+	}
+	.cursor {
+		display: none;
+		width: 1ch;
+		height: 1em;
+		background-color: currentColor;
+		margin-right: -1ch;
+		vertical-align: baseline;
+		animation: blink 1s steps(1) infinite;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cursor {
+		}
+	}
+	.is-typing .cursor {
+		display: inline-block;
+	}
+
+	@keyframes blink {
+		50% {
+			visibility: hidden;
+		}
 	}
 </style>
