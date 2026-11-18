@@ -1,0 +1,27 @@
+---
+interface Props {
+	lines: string[];
+	speed?: number;
+}
+
+const { lines, speed = 30 } = Astro.props;
+---
+<h1 class="sr-only">
+	{lines[0]}
+</h1>
+<div aria-hidden="true" data-typewriter data-speed={speed}>
+	{lines.map((line)=>(
+		<p>
+			<span class="typed"></span><span class="remaining">{line}</span>
+		</p>
+	))}
+</div>
+
+<style>
+	[data-typewriter] {
+		text-align: center;
+	}
+	.is-typing .remaining{
+		visibility: hidden;
+	}
+</style>

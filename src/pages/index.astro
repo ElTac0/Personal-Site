@@ -1,10 +1,18 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
 import VhsIntro from '../components/VhsIntro.astro';
-import Globe from '../components/AsciiGloab.astro';
+import Globe from '../components/AsciiGlobe.astro';
+import  Typewriter from '../components/Typewriter.astro';
 ---
 
 <PageLayout title="IzakCo">
-	<Globe />
 	<VhsIntro />
+
+	<Typewriter lines={[
+		'IZAK INDUSTRIES DEVELOPER OPERATING SYSTEM',
+		'COPYRIGHT 2026 IZAK INDUSTRIES',
+		'-Terminal 01-',
+	]} />
+	
+	<Globe />
 </PageLayout>
