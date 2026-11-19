@@ -59,31 +59,97 @@ const { lines, speed = 30 } = Astro.props;
 	if (!(wrapperEl instanceof HTMLElement))
 		throw new Error('Wrapper element not found');
 	const wrapper: HTMLElement = wrapperEl;
+
 	const cursorEl = wrapper.querySelector('.cursor');
 	if (!(cursorEl instanceof HTMLElement))
 		throw new Error('Cursor element not found');
 	const cursor: HTMLElement = cursorEl;
-	const speed = Number.isNaN(Number(wrapper.dataset.speed))
-		? 30
-		: Number(wrapper.dataset.speed);
+
+	const speedValue = Number(wrapper.dataset.speed);
+	const speed = Number.isNaN(speedValue) ? 30 : speedValue;
 
 	const lines = wrapper.querySelectorAll('p');
 	const sleep = (ms: number) =>
 		new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-	async function lineTyper(): Promise<void> {
+	let skipped = false;
+	let done = false;
+
+	function complete() {
+		if (done) return;
+		done = true;
+		document.documentElement.dataset.typewriterDone = 'true';
+		document.dispatchEvent(new CustomEvent('typewriter:done'));
+	}
+
+	function finish() {
+		if (done) return;
+		skipped = true;
+		wrapper.classList.add('is-typing');
+
+		let lastTyped: HTMLElement | null = null;
 		for (const line of lines) {
 			const typed = line.querySelector('.typed');
-			if (!(typed instanceof HTMLElement)) continue;
 			const remaining = line.querySelector('.remaining');
+			if (!(typed instanceof HTMLElement)) continue;
 			if (!(remaining instanceof HTMLElement)) continue;
+
+			typed.textContent =
+				(typed.textContent ?? '') + (remaining.textContent ?? '');
+			remaining.textContent = '';
+			lastTyped = typed;
+		}
+
+		if (lastTyped) lastTyped.after(cursor);
+		complete();
+	}
+
+	async function lineTyper(): Promise<void> {
+		wrapper.classList.add('is-typing');
+
+		for (const line of lines) {
+			if (skipped) return;
+
+			const typed = line.querySelector('.typed');
+			const remaining = line.querySelector('.remaining');
+			if (!(typed instanceof HTMLElement)) continue;
+			if (!(remaining instanceof HTMLElement)) continue;
+
 			typed.after(cursor);
+
 			while ((remaining.textContent ?? '') !== '') {
-				const temp = String(remaining.textContent ?? '');
-				typed.textContent += temp.slice(0, 1);
-				remaining.textContent = temp.slice(1);
+				if (skipped) return;
+
+				const text = remaining.textContent ?? '';
+				typed.textContent = (typed.textContent ?? '') + text.slice(0, 1);
+				remaining.textContent = text.slice(1);
 				await sleep(speed);
 			}
+
+			await sleep(200);
 		}
+
+		complete();
+	}
+
+	document.addEventListener('intro:skip', finish);
+
+	const reducedMotion = window.matchMedia(
+		'(prefers-reduced-motion: reduce)',
+	).matches;
+
+	function startTyping() {
+		if (reducedMotion) {
+			finish();
+		} else {
+			lineTyper();
+		}
+	}
+
+	// Wait for the VHS intro: check the flag first in case it already finished
+	if (document.documentElement.dataset.vhsDone === 'true') {
+		startTyping();
+	} else {
+		document.addEventListener('vhs:done', startTyping, { once: true });
 	}
 </script>

@@ -6,6 +6,7 @@
 
 <style>
 	#vhs {
+		display: none;
 		position: fixed;
 		inset: 0;
 		z-index: 9999;
@@ -14,6 +15,10 @@
 		transition-property: opacity;
 		transition-timing-function: ease;
 		/* duration is set from the script */
+	}
+
+	:global(.js) #vhs {
+		display: block;
 	}
 
 	#vhs.fade {
@@ -66,18 +71,50 @@
 	const STATIC_MS = 1500; // how long the static plays
 	const FADE_MS = 500; // how long the fade-out takes
 
-	const overlay = document.getElementById('vhs')!;
-	const canvas = document.getElementById('vhs-noise') as HTMLCanvasElement;
-	const ctx = canvas.getContext('2d')!;
+	const overlayEl = document.getElementById('vhs');
+	const canvasEl = document.getElementById('vhs-noise');
+	if (!(overlayEl instanceof HTMLElement))
+		throw new Error('VHS overlay not found');
+	if (!(canvasEl instanceof HTMLCanvasElement))
+		throw new Error('VHS canvas not found');
+	const overlay: HTMLElement = overlayEl;
+	const canvas: HTMLCanvasElement = canvasEl;
+
+	const context = canvas.getContext('2d');
+	if (!context) throw new Error('Canvas 2D context not available');
+	const ctx: CanvasRenderingContext2D = context;
 
 	let frame = 0;
+	let fadeTimer: number | undefined;
+	let done = false;
 
-	// Ends the intro and tells the rest of the page it's done
-	function finish() {
-		cancelAnimationFrame(frame);
-		overlay.remove();
+	// Tells the rest of the page the intro is over. Runs once.
+	function complete() {
+		if (done) return;
+		done = true;
 		document.documentElement.dataset.vhsDone = 'true';
 		document.dispatchEvent(new CustomEvent('vhs:done'));
+	}
+
+	// Stops drawing and removes the overlay. Safe to call more than once.
+	function cleanup() {
+		cancelAnimationFrame(frame);
+		window.clearTimeout(fadeTimer);
+		overlay.remove();
+	}
+
+	// Skip: end everything immediately
+	function skip() {
+		cleanup();
+		complete();
+	}
+
+	function startFade() {
+		overlay.classList.add('fade');
+		complete(); // typing starts while the static dissolves
+
+		// Backup in case transitionend never fires
+		window.setTimeout(cleanup, FADE_MS + 100);
 	}
 
 	function drawStatic() {
@@ -94,7 +131,8 @@
 	}
 
 	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-		finish();
+		cleanup();
+		complete();
 	} else {
 		canvas.width = 320;
 		canvas.height = 180;
@@ -106,7 +144,9 @@
 		frame = requestAnimationFrame(draw);
 
 		overlay.style.transitionDuration = `${FADE_MS}ms`;
-		setTimeout(() => overlay.classList.add('fade'), STATIC_MS);
-		overlay.addEventListener('transitionend', finish, { once: true });
+		fadeTimer = window.setTimeout(startFade, STATIC_MS);
+
+		overlay.addEventListener('transitionend', cleanup, { once: true });
+		document.addEventListener('intro:skip', skip, { once: true });
 	}
 </script>
