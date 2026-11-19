@@ -1,112 +1,112 @@
 <div id="vhs" aria-hidden="true">
-    <canvas id="vhs-noise"></canvas>
-    <div class="scanlines"></div>
-    <div class="tracking"></div>
+	<canvas id="vhs-noise"></canvas>
+	<div class="scanlines"></div>
+	<div class="tracking"></div>
 </div>
 
 <style>
-    #vhs {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        background: var(--color-bg);
-        pointer-events: none;
-        transition-property: opacity;
-        transition-timing-function: ease;
-        /* duration is set from the script */
-    }
+	#vhs {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		background: var(--color-bg);
+		pointer-events: none;
+		transition-property: opacity;
+		transition-timing-function: ease;
+		/* duration is set from the script */
+	}
 
-    #vhs.fade {
-        opacity: 0;
-    }
+	#vhs.fade {
+		opacity: 0;
+	}
 
-    #vhs-noise {
-        width: 100%;
-        height: 100%;
-        image-rendering: pixelated;
-        opacity: 0.85;
-    }
+	#vhs-noise {
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		opacity: 0.85;
+	}
 
-    .scanlines {
-        position: absolute;
-        inset: 0;
-        background: repeating-linear-gradient(
-            to bottom,
-            rgba(0, 0, 0, 1) 0 1px,
-            transparent 1px 3px
-        );
-    }
+	.scanlines {
+		position: absolute;
+		inset: 0;
+		background: repeating-linear-gradient(
+			to bottom,
+			rgba(0, 0, 0, 1) 0 1px,
+			transparent 1px 3px
+		);
+	}
 
-    .tracking {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 12%;
-        background: linear-gradient(
-            transparent,
-            color-mix(in srgb, var(--color-text) 40%, transparent),
-            transparent
-        );
-        animation: roll 3.5s linear infinite;
-    }
+	.tracking {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 12%;
+		background: linear-gradient(
+			transparent,
+			color-mix(in srgb, var(--color-text) 40%, transparent),
+			transparent
+		);
+		animation: roll 3.5s linear infinite;
+	}
 
-    @keyframes roll {
-        from {
-            transform: translateY(-100%);
-        }
-        to {
-            transform: translateY(100vh);
-        }
-    }
+	@keyframes roll {
+		from {
+			transform: translateY(-100%);
+		}
+		to {
+			transform: translateY(100vh);
+		}
+	}
 </style>
 
 <script>
-    // ---- Settings ----
-    const STATIC_MS = 1500; // how long the static plays
-    const FADE_MS = 500; // how long the fade-out takes
+	// ---- Settings ----
+	const STATIC_MS = 1500; // how long the static plays
+	const FADE_MS = 500; // how long the fade-out takes
 
-    const overlay = document.getElementById('vhs')!;
-    const canvas = document.getElementById('vhs-noise') as HTMLCanvasElement;
-    const ctx = canvas.getContext('2d')!;
+	const overlay = document.getElementById('vhs')!;
+	const canvas = document.getElementById('vhs-noise') as HTMLCanvasElement;
+	const ctx = canvas.getContext('2d')!;
 
-    let frame = 0;
+	let frame = 0;
 
-    // Ends the intro and tells the rest of the page it's done
-    function finish() {
-        cancelAnimationFrame(frame);
-        overlay.remove();
-        document.documentElement.dataset.vhsDone = 'true';
-        document.dispatchEvent(new CustomEvent('vhs:done'));
-    }
+	// Ends the intro and tells the rest of the page it's done
+	function finish() {
+		cancelAnimationFrame(frame);
+		overlay.remove();
+		document.documentElement.dataset.vhsDone = 'true';
+		document.dispatchEvent(new CustomEvent('vhs:done'));
+	}
 
-    function drawStatic() {
-        const img = ctx.createImageData(canvas.width, canvas.height);
-        const d = img.data;
-        for (let i = 0; i < d.length; i += 4) {
-            const v = Math.random() < 0.4 ? 0 : Math.random() ** 2 * 255;
-            d[i] = v * 0.15; // red: low
-            d[i + 1] = v; // green: full
-            d[i + 2] = v * 0.3; // blue: low
-            d[i + 3] = 255;
-        }
-        ctx.putImageData(img, 0, 0);
-    }
+	function drawStatic() {
+		const img = ctx.createImageData(canvas.width, canvas.height);
+		const d = img.data;
+		for (let i = 0; i < d.length; i += 4) {
+			const v = Math.random() < 0.4 ? 0 : Math.random() ** 2 * 255;
+			d[i] = v * 0.15; // red: low
+			d[i + 1] = v; // green: full
+			d[i + 2] = v * 0.3; // blue: low
+			d[i + 3] = 255;
+		}
+		ctx.putImageData(img, 0, 0);
+	}
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        finish();
-    } else {
-        canvas.width = 320;
-        canvas.height = 180;
+	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		finish();
+	} else {
+		canvas.width = 320;
+		canvas.height = 180;
 
-        const draw = () => {
-            drawStatic();
-            frame = requestAnimationFrame(draw);
-        };
-        frame = requestAnimationFrame(draw);
+		const draw = () => {
+			drawStatic();
+			frame = requestAnimationFrame(draw);
+		};
+		frame = requestAnimationFrame(draw);
 
-        overlay.style.transitionDuration = `${FADE_MS}ms`;
-        setTimeout(() => overlay.classList.add('fade'), STATIC_MS);
-        overlay.addEventListener('transitionend', finish, { once: true });
-    }
+		overlay.style.transitionDuration = `${FADE_MS}ms`;
+		setTimeout(() => overlay.classList.add('fade'), STATIC_MS);
+		overlay.addEventListener('transitionend', finish, { once: true });
+	}
 </script>

@@ -9,21 +9,23 @@ const { lines, speed = 30 } = Astro.props;
 
 <h1 class="sr-only">{lines[0]}</h1>
 <div aria-hidden="true" data-typewriter data-speed={speed}>
-	{lines.map((line, i) => (
+	{lines.map((line, i) =>
+		/* prettier-ignore */
 		<p>
-			<span class="typed"></span>
-			{i === 0 && <span class="cursor" />}
-			<span class="remaining">{line}</span>
-		</p>
-	))}
+			<span class="typed"></span>{i === 0 && <span class="cursor" />}<span class="remaining">{line}</span>
+		</p>,
+	)}
 </div>
 
 <style>
 	[data-typewriter] {
 		text-align: center;
-		margin: auto;
-		letter-spacing: normal;
+		letter-spacing: 0.1em;
 	}
+	[data-typewriter] p {
+		margin: 0;
+	}
+
 	.is-typing .remaining {
 		visibility: hidden;
 	}
@@ -38,6 +40,7 @@ const { lines, speed = 30 } = Astro.props;
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.cursor {
+			animation: none;
 		}
 	}
 	.is-typing .cursor {
@@ -50,3 +53,37 @@ const { lines, speed = 30 } = Astro.props;
 		}
 	}
 </style>
+
+<script>
+	const wrapperEl = document.querySelector('[data-typewriter]');
+	if (!(wrapperEl instanceof HTMLElement))
+		throw new Error('Wrapper element not found');
+	const wrapper: HTMLElement = wrapperEl;
+	const cursorEl = wrapper.querySelector('.cursor');
+	if (!(cursorEl instanceof HTMLElement))
+		throw new Error('Cursor element not found');
+	const cursor: HTMLElement = cursorEl;
+	const speed = Number.isNaN(Number(wrapper.dataset.speed))
+		? 30
+		: Number(wrapper.dataset.speed);
+
+	const lines = wrapper.querySelectorAll('p');
+	const sleep = (ms: number) =>
+		new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+	async function lineTyper(): Promise<void> {
+		for (const line of lines) {
+			const typed = line.querySelector('.typed');
+			if (!(typed instanceof HTMLElement)) continue;
+			const remaining = line.querySelector('.remaining');
+			if (!(remaining instanceof HTMLElement)) continue;
+			typed.after(cursor);
+			while ((remaining.textContent ?? '') !== '') {
+				const temp = String(remaining.textContent ?? '');
+				typed.textContent += temp.slice(0, 1);
+				remaining.textContent = temp.slice(1);
+				await sleep(speed);
+			}
+		}
+	}
+</script>

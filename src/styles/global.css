@@ -1,7 +1,7 @@
 :root {
 	--vignette: 0.7;
 	--scanline: 0.25;
-    --color-error: #ff3333;
+	--color-error: #ff3333;
 	--color-terminal-border: #104920;
 	--color-terminal-bg: #021b0a;
 	--color-bg: #07110a;
